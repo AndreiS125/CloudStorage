@@ -13,9 +13,21 @@ import java.nio.charset.StandardCharsets;
 
 public class Server {
     private int port;
+    public  static repository r;
+
+    {
+        try {
+            r = new repository();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public Server(int port) {
         this.port = port;
+    }
+    public enum State {
+        Reading, info, file;
     }
 
     public void run() throws Exception {
@@ -28,42 +40,7 @@ public class Server {
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new ChannelInboundHandlerAdapter(){
-                                @Override
-                                public void channelRead(ChannelHandlerContext ctx, Object msg) {     //(2)
-                                    ByteBuf in = (ByteBuf) msg;
-
-                                    //System.out.println("MSG READ: " + msg.);
-                                    ctx.writeAndFlush(in);
-                                    ctx.flush();
-
-                                    try {
-                                               // (1)
-                                            System.out.print((char) in.readByte());
-                                            System.out.flush();
-
-                                    } finally {
-
-                                        ReferenceCountUtil.release(msg); // (2)
-                                    }
-
-
-                                }
-
-                                @Override
-                                public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                                    // Close the connection when an exception is raised.
-                                    cause.printStackTrace();
-                                    ctx.close();
-                                }
-                                @Override
-                                public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-                                    System.out.println("Channel registered");
-                                    ctx.writeAndFlush("FUCKK");
-                                    ctx.channel().writeAndFlush("FRGHT");
-                                    ctx.fireChannelRegistered();
-                                }
-                            });
+                            ch.pipeline().addLast(new ServerHandler());
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)          // (5)

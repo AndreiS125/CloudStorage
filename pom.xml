@@ -63,6 +63,10 @@
             <id>io.netty</id>
             <url>https://mvnrepository.com/artifact/io.netty/netty-all</url>
         </repository>
+        <repository>
+            <id>com.google.code.gson</id>
+            <url>https://mvnrepository.com/artifact/com.google.code.gson/gson</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -72,6 +76,13 @@
             <artifactId>netty-all</artifactId>
             <version>4.1.84.Final</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10</version>
+        </dependency>
+
 
     </dependencies>
 </project>

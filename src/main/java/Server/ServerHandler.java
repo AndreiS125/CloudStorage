@@ -5,20 +5,34 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static Server.Server.r;
+
 public class ServerHandler extends ChannelInboundHandlerAdapter { //(1)
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {     //(2)
-        ByteBuf in = (ByteBuf) msg;
-        System.out.println("MSG READ: " + msg.toString());
-        ctx.writeAndFlush(msg);
-        ctx.flush();
-        try {
-            while (in.isReadable()) {        // (1)
-                System.out.print((char) in.readByte());
-                System.out.flush();
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws IOException {     //(2)
+        Message message = new Message();
+        message.initFromByteBuf((ByteBuf) msg);
+
+        if(message.getMsgType()== Message.MsgType.Registration){
+            if(!r.auth(message.login, message.password)){
+                r.add(message.login, message.password);
             }
-        } finally {
-            ReferenceCountUtil.release(msg); // (2)
+        }
+        if(message.getMsgType()== Message.MsgType.FileRequest){
+            Message m = new Message();
+            File f = new File(message.filename);
+            byte[] b = Files.readAllBytes(Paths.get(message.filename));
+            String s = "";
+            for(byte by:b){
+                s=s+String.valueOf(by);
+            }
+
         }
 
 
