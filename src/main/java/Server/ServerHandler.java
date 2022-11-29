@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static Server.Server.r;
@@ -53,36 +54,42 @@ public class ServerHandler extends ChannelInboundHandlerAdapter { //(1)
             m.filename=message.filename;
             Gson g = new GsonBuilder().create();
 
-            ctx.writeAndFlush(((ByteBuf) msg).writeBytes(g.toJson(m).getBytes(StandardCharsets.UTF_8)));
+            ctx.writeAndFlush((Unpooled.copiedBuffer(g.toJson(m), CharsetUtil.UTF_8)));
 
         }
         if (message.typ== Message.MsgType.FileList && r.auth(message.login, message.password)){
-            System.out.println("File list request");
+            System.out.println("File list request, by login "+message.login);
             Message m = new Message();
             File f = new File(message.filename);
-            Stream<Path> xz = null;
+            List<Path> lol = null;
             try {
-                xz= Files.list(Paths.get("saves/"));
+                lol= Files.list(Paths.get("saves/"+message.login+"/")).toList();
+
             } catch (IOException e) {
                 try {
-                    Files.createDirectory(Paths.get("saves/"));
+                    Files.createDirectory(Paths.get("saves/"+message.login+"/"));
                 } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+                    e.printStackTrace();
                 }
             }
-            for(Path p :xz.toList()){
-                m.files= m.files+(p.getFileName().toString());
-            };
+
+                for (Path p : lol) {
+                    System.out.println("HERE "+p.getFileName().toString());
+                    m.files = m.files +":"+ (p.getFileName().toString());
+                }
+
+
+
             m.typ= Message.MsgType.FileList;
             Gson g = new GsonBuilder().create();
 
-            ctx.writeAndFlush(((ByteBuf) msg).writeBytes(g.toJson(m).getBytes(StandardCharsets.UTF_8)));
+            ctx.writeAndFlush((Unpooled.copiedBuffer(g.toJson(m), CharsetUtil.UTF_8)));
         }
 
         if(message.typ == Message.MsgType.FileUpload && r.auth(message.login, message.password)){
             System.out.println("File uploading from a client");
             File f = new File("saves/"+message.login+"/"+message.filename);
-            if(f.exists()){
+            if(!f.exists()){
                 f.createNewFile();
                 Files.write(f.toPath(), message.file.getBytes(StandardCharsets.UTF_8));
 
@@ -105,11 +112,14 @@ public class ServerHandler extends ChannelInboundHandlerAdapter { //(1)
                 m.password=message.password;
                 m.typ= Message.MsgType.LoginSuccess;
                 Gson g = new GsonBuilder().create();
-                ctx.write(((ByteBuf) msg).writeBytes(g.toJson(m).getBytes(StandardCharsets.UTF_8)));
+                ctx.write((Unpooled.copiedBuffer(g.toJson(m), CharsetUtil.UTF_8)));
                 ctx.flush();
             }
         }
-        ctx.flush();
+
+        ((ByteBuf) msg).clear();
+
+
 
 
 
@@ -123,7 +133,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter { //(1)
     }
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("HIIII");
-        ctx.fireChannelRegistered();
+        System.out.println("Channel registered");
+
     }
 }
