@@ -128,5 +128,35 @@ public class repository {
         }
         return false;
     }
+    public ArrayList<String> getallmyfiles(String name) {
+        //if the answer = true, then u cant break blocks
+
+        try {
+
+            Statement s = c.createStatement();
+            ResultSet resultSet = s.executeQuery("Select * from files");
+
+            ArrayList<String> exit=new ArrayList<>();
+
+
+            while (resultSet.next()) {
+                if (resultSet.getString("owner").equals(name)){
+                    exit.add(resultSet.getString("name"));
+                }
+
+
+            }
+            s.close();
+            return exit;
+
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
+
+
+    }
 
 }
